@@ -52,9 +52,8 @@ def calculate_shape_similarity_with_gamma(data):
     Returns:
     float: The p-value of the KS test for Gamma distribution.
     """
-    shape = 2
-    scale = np.mean(data) / 2
-    return calculate_shape_similarity_with_ks(data, 'gamma', shape, scale)
+    shape, loc, scale = gamma.fit(data)
+    return calculate_shape_similarity_with_ks(data, 'gamma', shape, loc, scale)
 
 def calculate_shape_similarity_with_log_normal(data):
     """
@@ -66,8 +65,12 @@ def calculate_shape_similarity_with_log_normal(data):
     Returns:
     float: The p-value of the KS test for Log-Normal distribution.
     """
-    mean, std_dev = np.mean(np.log(data[data > 0])), np.std(np.log(data[data > 0]))
-    return calculate_shape_similarity_with_ks(data, 'lognorm', std_dev, np.exp(mean))
+    data = data[data > 0]
+    
+    # Fit the log-normal distribution parameters
+    shape, loc, scale = lognorm.fit(data, floc=0)  # Often, loc is fixed to 0 for pure log-normal
+    
+    return calculate_shape_similarity_with_ks(data, 'lognorm', shape, loc, scale)
 
 def calculate_shape_similarity_with_weibull(data):
     """
