@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
+matplotlib.use('Agg')
 from scipy.stats import norm, poisson, expon, chi2, beta, gamma, lognorm, weibull_min
 
 """
