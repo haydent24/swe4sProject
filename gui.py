@@ -1,4 +1,43 @@
-import matplotlib.pyplot as plt 
+"""
+CSV File Plotter and Data Distribution Explorer
+
+This Streamlit application allows users to upload a CSV file and visualize the distribution of data
+from a specified column, or to generate synthetic data from a variety of theoretical distributions.
+The application provides two main functionalities:
+
+1. **CSV File Plotter**: 
+   - Users can upload a CSV file containing numerical data in a column named "Value."
+   - The app generates a Kernel Density Estimate (KDE) plot of the data and optionally overlays a theoretical 
+     distribution curve, including Normal, Uniform, Gamma, Inverse Gamma, and Lognormal distributions.
+   - The overlay distribution is rescaled to match the peak height of the KDE curve for comparison.
+
+2. **Data Distribution Plotter**:
+   - Users can select a distribution (Normal, Uniform, Gamma, Inverse Gamma, Lognormal) and specify parameters 
+     such as mean, standard deviation, or shape/scale.
+   - The app generates a histogram of synthetic data based on the selected distribution and overlays the corresponding 
+     theoretical distribution, again rescaled to match the peak of the histogram.
+
+Features:
+- Users can download the resulting plots as PNG images and the generated data as CSV files.
+- Interactive elements allow for dynamic selection of distributions, parameters, and plot settings.
+
+Dependencies:
+- `streamlit` - For creating the web app interface.
+- `matplotlib` - For creating plots.
+- `numpy` - For numerical operations and data generation.
+- `pandas` - For handling CSV data.
+- `scipy.stats` - For statistical distribution functions.
+- `seaborn` - For KDE plot generation.
+
+Usage:
+- Upload a CSV file with a "Value" column for distribution analysis.
+- Generate and visualize synthetic data from selected distributions.
+- Download resulting plots and data.
+
+"""
+
+
+import matplotlib.pyplot as plt  
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
@@ -14,7 +53,18 @@ tab1, tab2 = st.tabs(["CSV Plotter", "Distribution Plotter"])
 
 # Function to plot the estimated density curve with optional overlay
 def plot_density_with_overlay(data, overlay_distribution=None):
-    """Plots the estimated density curve using KDE and optionally overlays a theoretical distribution curve."""
+    """
+    Plots a kernel density estimate (KDE) curve of the provided data and optionally overlays
+    a theoretical distribution curve.
+
+    Parameters:
+    - data (array-like): The data for which the KDE curve is plotted.
+    - overlay_distribution (str): The name of the theoretical distribution to overlay. Options include:
+      "Normal", "Uniform", "Gamma", "Inverse Gamma", and "Lognormal". If None, no overlay is applied.
+
+    Returns:
+    - None: The plot is displayed directly in the Streamlit app.
+    """
     fig, ax = plt.subplots()
     
     # Plot the KDE (kernel density estimate)
@@ -25,33 +75,32 @@ def plot_density_with_overlay(data, overlay_distribution=None):
         mean = np.mean(data)
         std_dev = np.std(data)
         x = np.linspace(min(data), max(data), 1000)
-        ax.plot(x, stats.norm.pdf(x, loc=mean, scale=std_dev), color='red', label='Normal Distribution')
+        normal_pdf = stats.norm.pdf(x, loc=mean, scale=std_dev)
+        ax.plot(x, normal_pdf / max(normal_pdf), color='red', label='Normal Distribution')  # Normalize
     elif overlay_distribution == "Uniform":
         lower = np.min(data)
         upper = np.max(data)
         x = np.linspace(lower, upper, 1000)
-        ax.plot(x, stats.uniform.pdf(x, loc=lower, scale=upper-lower), color='red', label='Uniform Distribution')
+        uniform_pdf = stats.uniform.pdf(x, loc=lower, scale=upper-lower)
+        ax.plot(x, uniform_pdf / max(uniform_pdf), color='red', label='Uniform Distribution')  # Normalize
     elif overlay_distribution == "Gamma":
         shape = 2.0  # Default shape parameter for Gamma distribution
         scale = 2.0  # Default scale parameter for Gamma distribution
         x = np.linspace(min(data), max(data), 1000)
-        # Shift the Gamma distribution to center it around the data (moderate adjustment)
-        loc = np.mean(data) - scale  # Reduced adjustment for a more subtle shift
-        ax.plot(x, stats.gamma.pdf(x, shape, loc=loc, scale=scale), color='red', label='Gamma Distribution')
+        gamma_pdf = stats.gamma.pdf(x, shape, scale=scale)
+        ax.plot(x, gamma_pdf / max(gamma_pdf), color='red', label='Gamma Distribution')  # Normalize
     elif overlay_distribution == "Inverse Gamma":
         shape = 3.0  # Default shape parameter for Inverse Gamma distribution
         scale = 2.0  # Default scale parameter for Inverse Gamma distribution
         x = np.linspace(min(data), max(data), 1000)
-        # Align the maximum of both the data and the theoretical distribution
-        mode = (shape - 1) * scale  # Mode of the Inverse Gamma distribution
-        loc = np.mean(data) - mode  # Shift to align the maximum
-        ax.plot(x, stats.invgamma.pdf(x, shape, loc=loc, scale=scale), color='red', label='Inverse Gamma Distribution')
+        invgamma_pdf = stats.invgamma.pdf(x, shape, scale=scale)
+        ax.plot(x, invgamma_pdf / max(invgamma_pdf), color='red', label='Inverse Gamma Distribution')  # Normalize
     elif overlay_distribution == "Lognormal":
         mean = np.mean(data)
         std_dev = np.std(data)
         x = np.linspace(min(data), max(data), 1000)
-        # Use `scale` for the mean and `shape` for the sigma (standard deviation of underlying normal distribution)
-        ax.plot(x, stats.lognorm.pdf(x, std_dev, scale=mean), color='red', label='Lognormal Distribution')
+        lognormal_pdf = stats.lognorm.pdf(x, std_dev, scale=mean)
+        ax.plot(x, lognormal_pdf / max(lognormal_pdf), color='red', label='Lognormal Distribution')  # Normalize
     
     # Add labels and title
     ax.set_title("Density Curve with Optional Overlay")
@@ -149,7 +198,7 @@ with tab2:
             st.error("Shape and scale parameters must be positive.")
     elif distribution == "Lognormal":
         mean = st.number_input("Mean", value=0.0, step=0.1, help="Mean of the Lognormal distribution.")
-        std_dev = st.number_input("Standard Deviation", value=1.0, step=0.1, help="Standard deviation of the Lognormal distribution.")
+        std_dev = st.number_input("Standard Deviation", value=1.0, step=0.0, help="Standard deviation of the Lognormal distribution.")
         data = np.random.lognormal(mean=mean, sigma=std_dev, size=num_samples)
 
     # Plot the generated data
@@ -166,32 +215,32 @@ with tab2:
             mean = np.mean(data)
             std_dev = np.std(data)
             x = np.linspace(min(data), max(data), 1000)
-            ax.plot(x, stats.norm.pdf(x, loc=mean, scale=std_dev), color='red', label='Normal Distribution')
+            normal_pdf = stats.norm.pdf(x, loc=mean, scale=std_dev)
+            ax.plot(x, normal_pdf * (max(np.histogram(data, bins=30)[0]) / max(normal_pdf)), color='red', label='Normal Distribution')  # Rescale
         elif distribution == "Uniform":
             lower = np.min(data)
             upper = np.max(data)
             x = np.linspace(lower, upper, 1000)
-            ax.plot(x, stats.uniform.pdf(x, loc=lower, scale=upper-lower), color='red', label='Uniform Distribution')
+            uniform_pdf = stats.uniform.pdf(x, loc=lower, scale=upper-lower)
+            ax.plot(x, uniform_pdf * (max(np.histogram(data, bins=30)[0]) / max(uniform_pdf)), color='red', label='Uniform Distribution')  # Rescale
         elif distribution == "Gamma":
             shape = 2.0  # Default shape parameter for Gamma distribution
             scale = 2.0  # Default scale parameter for Gamma distribution
             x = np.linspace(min(data), max(data), 1000)
-            # Shift the Gamma distribution to center it around the data (moderate adjustment)
-            loc = np.mean(data) - scale  # Reduced adjustment for a more subtle shift
-            ax.plot(x, stats.gamma.pdf(x, shape, loc=loc, scale=scale), color='red', label='Gamma Distribution')
+            gamma_pdf = stats.gamma.pdf(x, shape, scale=scale)
+            ax.plot(x, gamma_pdf * (max(np.histogram(data, bins=30)[0]) / max(gamma_pdf)), color='red', label='Gamma Distribution')  # Rescale
         elif distribution == "Inverse Gamma":
             shape = 3.0  # Default shape parameter for Inverse Gamma distribution
             scale = 2.0  # Default scale parameter for Inverse Gamma distribution
             x = np.linspace(min(data), max(data), 1000)
-            # Align the maximum of both the data and the theoretical distribution
-            mode = (shape - 1) * scale  # Mode of the Inverse Gamma distribution
-            loc = np.mean(data) - mode  # Shift to align the maximum
-            ax.plot(x, stats.invgamma.pdf(x, shape, loc=loc, scale=scale), color='red', label='Inverse Gamma Distribution')
+            invgamma_pdf = stats.invgamma.pdf(x, shape, scale=scale)
+            ax.plot(x, invgamma_pdf * (max(np.histogram(data, bins=30)[0]) / max(invgamma_pdf)), color='red', label='Inverse Gamma Distribution')  # Rescale
         elif distribution == "Lognormal":
             mean = np.mean(data)
             std_dev = np.std(data)
             x = np.linspace(min(data), max(data), 1000)
-            ax.plot(x, stats.lognorm.pdf(x, std_dev, scale=mean), color='red', label='Lognormal Distribution')
+            lognormal_pdf = stats.lognorm.pdf(x, std_dev, scale=mean)
+            ax.plot(x, lognormal_pdf * (max(np.histogram(data, bins=30)[0]) / max(lognormal_pdf)), color='red', label='Lognormal Distribution')  # Rescale
         
         # Show the legend and plot
         ax.legend()
@@ -205,8 +254,24 @@ with tab2:
 
         # Download button for the plot
         st.download_button(
-            label="Download Plot",
+            label="Download Plot as PNG",
             data=buf,
             file_name="distribution_plot.png",
             mime="image/png"
+        )
+
+        # Save data to a CSV buffer
+        csv_buf = io.StringIO()
+        pd.DataFrame(data, columns=["Generated Values"]).to_csv(csv_buf, index=False)
+        csv_buf.seek(0)
+
+        # Convert StringIO to bytes for download_button
+        csv_bytes = csv_buf.getvalue().encode('utf-8')
+
+        # Download button for CSV data
+        st.download_button(
+            label="Download Data as CSV",
+            data=csv_bytes,
+            file_name="generated_data.csv",
+            mime="text/csv"
         )
