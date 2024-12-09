@@ -1,70 +1,106 @@
+"""
+This script generates synthetic datasets based on various statistical distributions and saves
+them as CSV files. Each distribution has its parameters defined, and the data is saved in
+a 'data' directory located in the script's directory. Supported distributions include:
+Gaussian, Uniform, Exponential, Gamma, Inverse Gamma, and Lognormal.
+
+Functions:
+    - generate_distribution: Generates data for a specified distribution.
+    - save_distribution: Saves generated data to a CSV file.
+    - main: Coordinates the data generation and saving process.
+
+Usage:
+    Run this script directly to generate datasets for all predefined distributions.
+"""
+
 import numpy as np
 import pandas as pd
-import os
+from pathlib import Path
 
-# Get the current directory where the script is located
-current_directory = os.path.dirname(os.path.abspath(__file__))
+# Define the number of data points for each distribution
+NUM_POINTS = 1000
 
-# Ensure that the 'data' folder exists in the same directory as the script
-data_folder = os.path.join(current_directory, 'data')
-if not os.path.exists(data_folder):
-    os.makedirs(data_folder)
+# Define distribution parameters
+DISTRIBUTION_PARAMS = {
+    "Gaussian": {"loc": 0, "scale": 1},
+    "Uniform": {"low": 0, "high": 1},
+    "Exponential": {"scale": 1},  # Equivalent to 1 / lambda
+    "Gamma": {"shape": 2, "scale": 2},
+    "InverseGamma": {"shape": 3, "scale": 2},  # Inverse computed later
+    "Lognormal": {"mean": 0, "sigma": 1},
+}
 
-# Parameters for each distribution
-num_points = 1000  # Number of data points
+# Create the 'data' folder if it does not exist
+data_folder = Path(__file__).parent / "data"
+data_folder.mkdir(exist_ok=True)
 
-# Gaussian distribution parameters
-mean = 0  # Mean of the Gaussian distribution
-std_dev = 1  # Standard deviation of the Gaussian distribution
+def generate_distribution(name, params, size):
+    """
+    Generate data for a given distribution.
 
-# Uniform distribution parameters
-lower_uniform = 0  # Lower bound of the Uniform distribution
-upper_uniform = 1  # Upper bound of the Uniform distribution
+    Parameters:
+        name (str): Name of the distribution.
+        params (dict): Parameters for the distribution.
+        size (int): Number of data points to generate.
 
-# Exponential distribution parameters
-lambda_exp = 1  # Rate parameter for the Exponential distribution
+    Returns:
+        np.ndarray: Generated data.
 
-# Gamma distribution parameters
-shape_gamma = 2  # Shape parameter of the Gamma distribution
-scale_gamma = 2  # Scale parameter of the Gamma distribution
+    Raises:
+        ValueError: If the distribution name is not supported.
+    """
+    if name == "Gaussian":
+        return np.random.normal(loc=params["loc"], scale=params["scale"], size=size)
+    elif name == "Uniform":
+        return np.random.uniform(low=params["low"], high=params["high"], size=size)
+    elif name == "Exponential":
+        return np.random.exponential(scale=params["scale"], size=size)
+    elif name == "Gamma":
+        return np.random.gamma(shape=params["shape"], scale=params["scale"], size=size)
+    elif name == "InverseGamma":
+        data = np.random.gamma(shape=params["shape"], scale=params["scale"], size=size)
+        return 1 / data  # Compute inverse
+    elif name == "Lognormal":
+        return np.random.lognormal(mean=params["mean"], sigma=params["sigma"], size=size)
+    else:
+        raise ValueError(f"Unsupported distribution: {name}")
 
-# Inverse Gamma distribution parameters
-shape_inv_gamma = 3  # Shape parameter of the Inverse Gamma distribution
-scale_inv_gamma = 2  # Scale parameter of the Inverse Gamma distribution
+def save_distribution(data, file_name):
+    """
+    Save generated data to a CSV file.
 
-# Lognormal distribution parameters
-mean_lognormal = 0  # Mean of the Lognormal distribution
-std_dev_lognormal = 1  # Standard deviation of the Lognormal distribution
+    Parameters:
+        data (np.ndarray): Data to save.
+        file_name (str): Name of the output file.
 
-# Function to generate and save each distribution
-def generate_and_save_distribution(distribution_name, data, file_name):
-    # Create a DataFrame and save to CSV
-    df = pd.DataFrame({'Value': data})
-    output_file = os.path.join(data_folder, file_name)
+    Returns:
+        None
+    """
+    df = pd.DataFrame({"Value": data})
+    output_file = data_folder / file_name
     df.to_csv(output_file, index=False)
-    print(f"CSV file '{output_file}' has been generated.")
+    print(f"Saved distribution to {output_file}")
 
-# Gaussian distribution
-gaussian_data = np.random.normal(loc=mean, scale=std_dev, size=num_points)
-generate_and_save_distribution('Gaussian', gaussian_data, 'gaussian_data.csv')
+def main():
+    """
+    Main function to generate and save distributions.
 
-# Uniform distribution
-uniform_data = np.random.uniform(low=lower_uniform, high=upper_uniform, size=num_points)
-generate_and_save_distribution('Uniform', uniform_data, 'uniform_data.csv')
+    Iterates through predefined distributions, generates data, and saves 
+    each distribution as a CSV file in the 'data' directory.
 
-# Exponential distribution
-exponential_data = np.random.exponential(scale=1/lambda_exp, size=num_points)
-generate_and_save_distribution('Exponential', exponential_data, 'exponential_data.csv')
+    Returns:
+        None
+    """
+    for name, params in DISTRIBUTION_PARAMS.items():
+        try:
+            data = generate_distribution(name, params, NUM_POINTS)
+            save_distribution(data, f"{name.lower()}_data.csv")
+        except Exception as e:
+            print(f"Error generating {name} distribution: {e}")
 
-# Gamma distribution
-gamma_data = np.random.gamma(shape=shape_gamma, scale=scale_gamma, size=num_points)
-generate_and_save_distribution('Gamma', gamma_data, 'gamma_data.csv')
-
-# Inverse Gamma distribution
-inv_gamma_data = np.random.gamma(shape=shape_inv_gamma, scale=scale_inv_gamma, size=num_points)
-inv_gamma_data = 1 / inv_gamma_data  # Inverse of Gamma for Inverse Gamma distribution
-generate_and_save_distribution('Inverse Gamma', inv_gamma_data, 'inverse_gamma_data.csv')
-
-# Lognormal distribution
-lognormal_data = np.random.lognormal(mean=mean_lognormal, sigma=std_dev_lognormal, size=num_points)
-generate_and_save_distribution('Lognormal', lognormal_data, 'lognormal_data.csv')
+if __name__ == "__main__":
+    """
+    Entry point of the script. Calls the main function to generate and save
+    predefined distributions.
+    """
+    main()
