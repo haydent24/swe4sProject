@@ -1,3 +1,5 @@
+# Filename: correlation_generator.py
+
 import numpy as np
 from scipy.stats import kstest, beta, norm, gamma, lognorm
 import argparse
@@ -81,13 +83,10 @@ def main():
 
     # Load the dataset
     try:
-        data = np.genfromtxt(args.datafile, delimiter=",", skip_header=1)  # Adjust skip_header as needed
-        if np.isnan(data).any():
-            raise ValueError("Dataset contains non-numeric or missing values.")
+        data = np.loadtxt(args.datafile, delimiter=",")
     except Exception as e:
         print(f"Error loading data file: {e}")
         return
-
 
     # Calculate similarity scores
     similarity_scores = {
