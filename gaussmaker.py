@@ -1,22 +1,19 @@
 import numpy as np
 import pandas as pd
 
-# Parameters for the Gaussian curve
+# Parameters for the Gaussian distribution
 mean = 0  # Mean of the distribution
 std_dev = 1  # Standard deviation of the distribution
-num_points = 1000  # Number of points to plot
+num_samples = 1000  # Number of samples to generate
 
-# Generate x values evenly spaced around the meanS
-x_values = np.linspace(mean - 4*std_dev, mean + 4*std_dev, num_points)
-
-# Calculate the y values (PDF of the Gaussian distribution)
-y_values = (1 / (std_dev * np.sqrt(2 * np.pi))) * np.exp(-0.5 * ((x_values - mean) / std_dev)**2)
+# Generate random data
+data = np.random.normal(loc=mean, scale=std_dev, size=num_samples)
 
 # Create a DataFrame
-df = pd.DataFrame({'X': x_values, 'Y': y_values})
+df = pd.DataFrame({'Gaussian Data': data})
 
 # Save to a CSV file
-output_file = 'gaussian_curve.csv'
+output_file = 'gaussian_distribution.csv'
 df.to_csv(output_file, index=False)
 
-print(f"CSV file '{output_file}' has been generated.")
+print(f"CSV file '{output_file}' has been generated with {num_samples} samples.")

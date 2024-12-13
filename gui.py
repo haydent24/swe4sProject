@@ -69,38 +69,42 @@ def plot_density_with_overlay(data, overlay_distribution=None):
     
     # Plot the KDE (kernel density estimate)
     sns.kdeplot(data, shade=True, color='blue', ax=ax, label='KDE Estimate')
-    
+
+    # Compute the KDE curve directly using scipy.stats.gaussian_kde
+    kde = stats.gaussian_kde(data)
+    x_kde = np.linspace(min(data), max(data), 1000)  # Evaluate KDE on a fine grid
+    y_kde = kde(x_kde)
+    kde_peak = max(y_kde)  # Maximum value of the KDE curve
+
     # Optionally overlay a theoretical distribution
+    x = np.linspace(min(data), max(data), 1000)
     if overlay_distribution == "Normal":
         mean = np.mean(data)
         std_dev = np.std(data)
-        x = np.linspace(min(data), max(data), 1000)
         normal_pdf = stats.norm.pdf(x, loc=mean, scale=std_dev)
-        ax.plot(x, normal_pdf / max(normal_pdf), color='red', label='Normal Distribution')  # Normalize
+        ax.plot(x, normal_pdf * (kde_peak / max(normal_pdf)), color='red', label='Normal Distribution')
     elif overlay_distribution == "Uniform":
         lower = np.min(data)
         upper = np.max(data)
-        x = np.linspace(lower, upper, 1000)
-        uniform_pdf = stats.uniform.pdf(x, loc=lower, scale=upper-lower)
-        ax.plot(x, uniform_pdf / max(uniform_pdf), color='red', label='Uniform Distribution')  # Normalize
+        uniform_pdf = stats.uniform.pdf(x, loc=lower, scale=upper - lower)
+        ax.plot(x, uniform_pdf * (kde_peak / max(uniform_pdf)), color='red', label='Uniform Distribution')
     elif overlay_distribution == "Gamma":
         shape = 2.0  # Default shape parameter for Gamma distribution
         scale = 2.0  # Default scale parameter for Gamma distribution
-        x = np.linspace(min(data), max(data), 1000)
         gamma_pdf = stats.gamma.pdf(x, shape, scale=scale)
-        ax.plot(x, gamma_pdf / max(gamma_pdf), color='red', label='Gamma Distribution')  # Normalize
+        ax.plot(x, gamma_pdf * (kde_peak / max(gamma_pdf)), color='red', label='Gamma Distribution')
     elif overlay_distribution == "Inverse Gamma":
         shape = 3.0  # Default shape parameter for Inverse Gamma distribution
         scale = 2.0  # Default scale parameter for Inverse Gamma distribution
-        x = np.linspace(min(data), max(data), 1000)
         invgamma_pdf = stats.invgamma.pdf(x, shape, scale=scale)
-        ax.plot(x, invgamma_pdf / max(invgamma_pdf), color='red', label='Inverse Gamma Distribution')  # Normalize
+        ax.plot(x, invgamma_pdf * (kde_peak / max(invgamma_pdf)), color='red', label='Inverse Gamma Distribution')
     elif overlay_distribution == "Lognormal":
         mean = np.mean(data)
         std_dev = np.std(data)
-        x = np.linspace(min(data), max(data), 1000)
-        lognormal_pdf = stats.lognorm.pdf(x, std_dev, scale=mean)
-        ax.plot(x, lognormal_pdf / max(lognormal_pdf), color='red', label='Lognormal Distribution')  # Normalize
+        lognormal_pdf = stats.lognorm.pdf(x, s=std_dev, scale=np.exp(mean))
+        ax.plot(x, lognormal_pdf * (kde_peak / max(lognormal_pdf)), color='red', label='Lognormal Distribution')
+
+
     
     # Add labels and title
     ax.set_title("Density Curve with Optional Overlay")
