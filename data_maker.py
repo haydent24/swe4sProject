@@ -2,7 +2,7 @@
 This script generates synthetic datasets based on various statistical distributions and saves
 them as CSV files. Each distribution has its parameters defined, and the data is saved in
 a 'data' directory located in the script's directory. Supported distributions include:
-Gaussian, Uniform, Exponential, Gamma, Inverse Gamma, and Lognormal.
+Gaussian, Uniform, Beta, Gamma, Inverse Gamma, and Lognormal.
 
 Functions:
     - generate_distribution: Generates data for a specified distribution.
@@ -24,9 +24,9 @@ NUM_POINTS = 1000
 DISTRIBUTION_PARAMS = {
     "Gaussian": {"loc": 0, "scale": 1},
     "Uniform": {"low": 0, "high": 1},
-    "Exponential": {"scale": 1},  # Equivalent to 1 / lambda
+    "Beta": {"alpha": 2, "beta": 5},
     "Gamma": {"shape": 2, "scale": 2},
-    "InverseGamma": {"shape": 3, "scale": 2},  # Inverse computed later
+    "Inverse_Gamma": {"shape": 3, "scale": 2},  # Inverse computed later
     "Lognormal": {"mean": 0, "sigma": 1},
 }
 
@@ -53,11 +53,11 @@ def generate_distribution(name, params, size):
         return np.random.normal(loc=params["loc"], scale=params["scale"], size=size)
     elif name == "Uniform":
         return np.random.uniform(low=params["low"], high=params["high"], size=size)
-    elif name == "Exponential":
-        return np.random.exponential(scale=params["scale"], size=size)
+    elif name == "Beta":
+        return np.random.beta(a=params["alpha"], b=params["beta"], size=size)
     elif name == "Gamma":
         return np.random.gamma(shape=params["shape"], scale=params["scale"], size=size)
-    elif name == "InverseGamma":
+    elif name == "Inverse_Gamma":
         data = np.random.gamma(shape=params["shape"], scale=params["scale"], size=size)
         return 1 / data  # Compute inverse
     elif name == "Lognormal":
